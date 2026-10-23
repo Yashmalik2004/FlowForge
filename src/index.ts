@@ -32,7 +32,7 @@ app.use("/api/jobs", createJobsRouter());
 app.use("/api/stats", createStatsRouter(() => (worker.isRunning() ? config.workerConcurrency : 0)));
 
 server.listen(config.port, () => {
-  console.info(`TaskFlow server running on port ${config.port}`);
+  console.info(`FlowForge server running on port ${config.port}`);
 });
 
 const shutdown = (): void => {

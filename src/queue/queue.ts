@@ -1,7 +1,7 @@
 import { Queue } from "bullmq";
 import { redisConnectionOptions } from "../lib/redis";
 
-export const TASK_QUEUE_NAME = "taskflow-jobs";
+export const TASK_QUEUE_NAME = "flowforge-jobs";
 
 export const priorityToBullPriority = (priority: "low" | "normal" | "high"): number => {
   const priorities = {

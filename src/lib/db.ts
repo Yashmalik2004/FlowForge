@@ -2,12 +2,12 @@ import { PrismaClient } from "@prisma/client";
 
 declare global {
   // eslint-disable-next-line no-var
-  var taskflowPrisma: PrismaClient | undefined;
+  var flowforgePrisma: PrismaClient | undefined;
 }
 
-export const prisma = globalThis.taskflowPrisma ?? new PrismaClient();
+export const prisma = globalThis.flowforgePrisma ?? new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.taskflowPrisma = prisma;
+  globalThis.flowforgePrisma = prisma;
 }
 

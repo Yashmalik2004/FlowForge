@@ -2,7 +2,7 @@ import { startWorkers } from "../queue/consumer";
 
 const worker = startWorkers();
 
-console.info("TaskFlow worker running");
+console.info("FlowForge worker running");
 
 process.on("SIGINT", () => {
   worker.close().finally(() => process.exit(0));

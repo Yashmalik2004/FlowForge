@@ -74,9 +74,9 @@ export default function DashboardPage(): JSX.Element {
     <main className="mx-auto max-w-7xl px-6 py-8">
       <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
-          <Image src="/icon.png" alt="TaskFlow" width={44} height={44} className="h-11 w-11 rounded-lg object-contain" priority />
+          <Image src="/icon.png" alt="FlowForge" width={44} height={44} className="h-11 w-11 rounded-lg object-contain" priority />
           <div>
-            <h1 className="text-2xl font-semibold text-navy">TaskFlow Admin</h1>
+            <h1 className="text-2xl font-semibold text-navy">FlowForge Admin</h1>
             <p className="mt-1 text-sm text-slate-500">Queue health, job history, worker state, and retry outcomes.</p>
           </div>
         </div>

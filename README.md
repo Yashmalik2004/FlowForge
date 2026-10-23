@@ -1,15 +1,15 @@
-# TaskFlow
+# FlowForge
 
-TaskFlow is a distributed background job queue for submitting long-running or resource-intensive tasks through a REST API and processing them asynchronously. It is designed for work such as sending emails, resizing images, generating PDFs, and notifying the caller with an optional webhook after completion.
+FlowForge is a distributed background job queue for submitting long-running or resource-intensive tasks through a REST API and processing them asynchronously. It is designed for work such as sending emails, resizing images, generating PDFs, and notifying the caller with an optional webhook after completion.
 
-TaskFlow uses durable queue and database storage, but it does not claim true exactly-once execution. The supported production guarantee is at-least-once processing with clear job state, retries, and idempotency-friendly handler design.
+FlowForge uses durable queue and database storage, but it does not claim true exactly-once execution. The supported production guarantee is at-least-once processing with clear job state, retries, and idempotency-friendly handler design.
 
 ## How It Works
 
 - Submit a job via `POST /api/jobs`.
-- TaskFlow writes the job to PostgreSQL and enqueues it in BullMQ backed by Redis.
+- FlowForge writes the job to PostgreSQL and enqueues it in BullMQ backed by Redis.
 - Workers pull jobs in priority order and execute the registered handler for the job's `taskType`.
-- On completion or final failure, TaskFlow optionally POSTs a webhook callback with the result or error.
+- On completion or final failure, FlowForge optionally POSTs a webhook callback with the result or error.
 - The admin dashboard reads REST APIs and listens for Socket.io `job:updated` events to show real-time progress.
 
 ## Tech Stack
@@ -28,8 +28,8 @@ Frontend: Next.js, React, Tailwind CSS, Socket.io client, Recharts.
 ## Step 1 — Clone and Install
 
 ```bash
-git clone <your-repo-url> taskflow
-cd taskflow
+git clone <your-repo-url> flowforge
+cd flowforge
 npm install
 cd dashboard && npm install
 ```
@@ -113,7 +113,7 @@ Failed jobs use `"status": "failed"`, `"result": null`, and an error message.
 
 ## Architecture
 
-TaskFlow separates job submission, queueing, execution, persistence, and monitoring:
+FlowForge separates job submission, queueing, execution, persistence, and monitoring:
 
 - API: validates requests, creates jobs, lists jobs, returns job details, and handles cancellation.
 - Queue: BullMQ stores job work items in Redis and applies priority ordering.
@@ -128,7 +128,7 @@ The first deployment runs API and workers in one Node.js process. The queue and 
 | Variable              | Description                                             | Default                                                  |
 | --------------------- | ------------------------------------------------------- | -------------------------------------------------------- |
 | `REDIS_URL`           | Redis connection URL for BullMQ                         | `redis://localhost:6379`                                 |
-| `DATABASE_URL`        | PostgreSQL connection URL for Prisma                    | `postgresql://postgres:postgres@localhost:5434/taskflow` |
+| `DATABASE_URL`        | PostgreSQL connection URL for Prisma                    | `postgresql://postgres:postgres@localhost:5434/flowforge` |
 | `WORKER_CONCURRENCY`  | Number of concurrent worker jobs in the unified process | `5`                                                      |
 | `JOB_TIMEOUT_MS`      | Default per-job timeout in milliseconds                 | `30000`                                                  |
 | `MAX_RETRIES`         | Default retry count after the first attempt, max 10     | `3`                                                      |
@@ -191,7 +191,7 @@ Returns queue counts, success rate, seven-day completion/failure aggregates, act
 
 ## Queue and Retry Strategy
 
-BullMQ stores queued work in Redis. TaskFlow maps priorities to BullMQ priority numbers with high priority first, then normal, then low.
+BullMQ stores queued work in Redis. FlowForge maps priorities to BullMQ priority numbers with high priority first, then normal, then low.
 
 Retries use exponential backoff with jitter:
 

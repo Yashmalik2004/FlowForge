@@ -3,7 +3,7 @@ import { parseEnv } from "./env";
 
 const validEnv = {
   REDIS_URL: "redis://localhost:6379",
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/taskflow",
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/flowforge",
   WORKER_CONCURRENCY: "5",
   JOB_TIMEOUT_MS: "30000",
   MAX_RETRIES: "3",

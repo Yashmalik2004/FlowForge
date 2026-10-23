@@ -1,5 +1,5 @@
 {
-  "name": "taskflow",
+  "name": "flowforge",
   "version": "1.0.0",
   "description": "A production-honest distributed task queue with REST APIs, BullMQ workers, PostgreSQL history, and an admin dashboard.",
   "main": "dist/index.js",
@@ -17,7 +17,7 @@
     "queue",
     "bullmq",
     "redis",
-    "taskflow"
+    "flowforge"
   ],
   "author": "",
   "license": "MIT",
