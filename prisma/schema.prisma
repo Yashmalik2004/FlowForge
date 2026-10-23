@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id          String    @id @default(uuid()) @db.Uuid
+  jobId       String    @unique
+  taskType    String
+  payload     Json
+  status      String
+  progress    Int       @default(0)
+  result      Json?
+  error       String?
+  priority    String
+  attempts    Int       @default(0)
+  maxRetries  Int       @default(3)
+  callbackUrl String?
+  timeout     Int       @default(30000)
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  nextRetryAt DateTime?
+
+  logs JobLog[]
+
+  @@index([taskType])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model JobLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  jobId     String
+  message   String
+  level     String
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [jobId], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([createdAt])
+}
