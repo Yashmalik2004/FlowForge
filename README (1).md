@@ -882,21 +882,6 @@ Retries use exponential backoff with jitter:
 
 Attempt 1 waits about 2 seconds, attempt 2 about 4 seconds, and attempt 3 about 8 seconds. PostgreSQL records attempt counts and `nextRetryAt` for visibility.
 
-### Retry Timeline
-
-```mermaid
-gantt
-    title Retry Backoff Timeline (approximate, excludes handler runtime and jitter)
-    dateFormat  s
-    axisFormat  %Ss
-    section Attempts
-    Attempt 1 runs          :a1, 0, 1s
-    Wait about 2s           :w1, after a1, 2s
-    Attempt 2 runs          :a2, after w1, 1s
-    Wait about 4s           :w2, after a2, 4s
-    Attempt 3 runs          :a3, after w2, 1s
-    Wait about 8s           :w3, after a3, 8s
-    Final attempt runs      :a4, after w3, 1s
 ```
 
 ### Backoff Growth
