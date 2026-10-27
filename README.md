@@ -153,43 +153,6 @@ Backend: Node.js, TypeScript, Express, BullMQ, Redis, PostgreSQL, Prisma, Socket
 
 Frontend: Next.js, React, Tailwind CSS, Socket.io client, Recharts.
 
-### Technology Map
-
-```mermaid
-flowchart LR
-    subgraph Backend
-        N[Node.js + TypeScript]
-        E[Express]
-        B[BullMQ]
-        P[Prisma]
-        S[Socket.io]
-        A[Axios]
-    end
-    subgraph Frontend
-        NX[Next.js + React]
-        T[Tailwind CSS]
-        SC[Socket.io Client]
-        RC[Recharts]
-    end
-    subgraph Data["Data Stores"]
-        RDS[(Redis)]
-        PGD[(PostgreSQL)]
-    end
-
-    N --- E
-    N --- B
-    N --- P
-    N --- S
-    N --- A
-    B --> RDS
-    P --> PGD
-    NX --- T
-    NX --- SC
-    NX --- RC
-    SC <-->|events| S
-    NX -->|REST| E
-```
-
 ## Prerequisites
 
 - Node.js 18+
@@ -200,7 +163,7 @@ flowchart LR
 ## Step 1 — Clone and Install
 
 ```bash
-git clone <your-repo-url> flowforge
+git clone https://github.com/Yashmalik2004/FlowForge.git
 cd flowforge
 npm install
 cd dashboard && npm install
@@ -242,19 +205,6 @@ npm run dev
 ```
 
 Dashboard runs at `http://localhost:3001`.
-
-### Local Setup Flow
-
-```mermaid
-flowchart TD
-    A([Start]) --> B[Clone repo and run npm install<br/>root and dashboard]
-    B --> C[docker-compose up -d<br/>Redis + PostgreSQL]
-    C --> D[cp .env.example .env<br/>review values]
-    D --> E[npx prisma migrate dev]
-    E --> F[npm run dev<br/>API + Workers on :3000]
-    F --> G[cd dashboard and npm run dev<br/>Dashboard on :3001]
-    G --> H([Submit a test job and watch it live])
-```
 
 ## How to Test It
 
@@ -318,57 +268,7 @@ FlowForge separates job submission, queueing, execution, persistence, and monito
 
 The first deployment runs API and workers in one Node.js process. The queue and database boundaries allow splitting API and workers later.
 
-### Layered Architecture
-
-```mermaid
-flowchart TB
-    subgraph L1["Presentation Layer"]
-        UI[Next.js Dashboard<br/>Tables, Charts, Realtime indicator]
-    end
-    subgraph L2["Application Layer"]
-        API[Express API<br/>validate, create, list, detail, cancel]
-        WRK[Workers<br/>execute, timeout, retry, webhook]
-    end
-    subgraph L3["Messaging Layer"]
-        BQ[BullMQ<br/>priority ordering, delayed retries]
-    end
-    subgraph L4["Persistence Layer"]
-        RDS[(Redis<br/>queue state)]
-        PGD[(PostgreSQL<br/>history, status, payloads, results, logs)]
-    end
-
-    UI -->|REST + Socket.io| API
-    API --> BQ
-    BQ --> WRK
-    BQ --- RDS
-    API --> PGD
-    WRK --> PGD
-    WRK -->|job:updated| UI
-```
 ## Data Flow Diagrams (DFD)
-
-### DFD Level 0 — Context Diagram
-
-FlowForge as a single process, with its external entities and the data crossing the boundary.
-
-```mermaid
-flowchart LR
-    CLIENT([Client])
-    ADMIN([Admin / Operator])
-    CBK([Webhook Receiver])
-
-    FF((0<br/>FlowForge<br/>Job Queue System))
-
-    CLIENT -->|Job request<br/>taskType, payload, priority, retries, timeout, callbackUrl| FF
-    FF -->|jobId, status, createdAt| CLIENT
-    CLIENT -->|Status / logs query| FF
-    FF -->|Job details, logs| CLIENT
-
-    ADMIN -->|Dashboard requests, cancel requests| FF
-    FF -->|Job lists, stats, realtime job:updated events| ADMIN
-
-    FF -->|Webhook payload<br/>jobId, status, result, error| CBK
-```
 
 ### DFD Level 1 — Major Processes and Data Stores
 
@@ -546,24 +446,6 @@ flowchart TD
     H --> Z
 ```
 
-### Job Cancellation Flow (`DELETE /api/jobs/:jobId`)
-
-```mermaid
-flowchart TD
-    A([DELETE /api/jobs/:jobId]) --> B[Load job from PostgreSQL]
-    B --> C{Status}
-    C -- completed, failed, or cancelled --> D[Return error]
-    D --> Z([End])
-    C -- pending --> E[Try to remove job from BullMQ]
-    E --> F[Mark cancelled in PostgreSQL]
-    C -- active --> G[Mark cancelled in PostgreSQL]
-    G --> H[Handler may still finish<br/>unless it checks cancellation state]
-    F --> I[Emit job:updated]
-    H --> I
-    I --> J[Return success]
-    J --> Z
-```
-
 ### Priority Queue Ordering
 
 ```mermaid
@@ -731,35 +613,6 @@ sequenceDiagram
 | `PORT`                | Backend HTTP port                                       |
 | `NODE_ENV`            | Runtime mode                                            |
 | `CORS_ORIGIN`         | Dashboard origin allowed by API and Socket.io           |
-
-### Where Each Variable Applies
-
-```mermaid
-flowchart LR
-    subgraph Config[".env"]
-        V1[REDIS_URL]
-        V2[DATABASE_URL]
-        V3[WORKER_CONCURRENCY]
-        V4[JOB_TIMEOUT_MS]
-        V5[MAX_RETRIES]
-        V6[WEBHOOK_TIMEOUT_MS]
-        V7[WEBHOOK_MAX_RETRIES]
-        V8[PORT]
-        V9[NODE_ENV]
-        V10[CORS_ORIGIN]
-    end
-    V1 --> Q[BullMQ Queue and Workers]
-    V2 --> P[Prisma / PostgreSQL]
-    V3 --> W[Worker concurrency]
-    V4 --> W
-    V5 --> R[Retry policy]
-    V6 --> WH[Webhook dispatcher]
-    V7 --> WH
-    V8 --> A[Express HTTP server]
-    V9 --> A
-    V10 --> A
-    V10 --> S[Socket.io server]
-```
 
 ## API Endpoints
 
