@@ -17,7 +17,6 @@ FlowForge uses durable queue and database storage, but it does not claim true ex
 - [Data Flow Diagrams (DFD)](#data-flow-diagrams-dfd)
 - [Process Flowcharts](#process-flowcharts)
 - [Sequence Diagrams](#sequence-diagrams)
-- [Environment Variables](#environment-variables)
 - [API Endpoints](#api-endpoints)
 - [Queue and Retry Strategy](#queue-and-retry-strategy)
 - [Data Model](#data-model)
@@ -720,18 +719,18 @@ sequenceDiagram
 
 ## Environment Variables
 
-| Variable              | Description                                             | Default                                                  |
-| --------------------- | ------------------------------------------------------- | -------------------------------------------------------- |
-| `REDIS_URL`           | Redis connection URL for BullMQ                         | `redis://localhost:6379`                                 |
-| `DATABASE_URL`        | PostgreSQL connection URL for Prisma                    | `postgresql://postgres:postgres@localhost:5434/flowforge` |
-| `WORKER_CONCURRENCY`  | Number of concurrent worker jobs in the unified process | `5`                                                      |
-| `JOB_TIMEOUT_MS`      | Default per-job timeout in milliseconds                 | `30000`                                                  |
-| `MAX_RETRIES`         | Default retry count after the first attempt, max 10     | `3`                                                      |
-| `WEBHOOK_TIMEOUT_MS`  | Axios timeout for webhook calls                         | `10000`                                                  |
-| `WEBHOOK_MAX_RETRIES` | Maximum webhook delivery attempts                       | `3`                                                      |
-| `PORT`                | Backend HTTP port                                       | `3000`                                                   |
-| `NODE_ENV`            | Runtime mode                                            | `development`                                            |
-| `CORS_ORIGIN`         | Dashboard origin allowed by API and Socket.io           | `http://localhost:3001`                                  |
+| Variable              | Description                                             |
+| --------------------- | ------------------------------------------------------- |
+| `REDIS_URL`           | Redis connection URL for BullMQ                         |
+| `DATABASE_URL`        | PostgreSQL connection URL for Prisma                    |
+| `WORKER_CONCURRENCY`  | Number of concurrent worker jobs in the unified process |
+| `JOB_TIMEOUT_MS`      | Default per-job timeout in milliseconds                 |
+| `MAX_RETRIES`         | Default retry count after the first attempt, max 10     |
+| `WEBHOOK_TIMEOUT_MS`  | Axios timeout for webhook calls                         |
+| `WEBHOOK_MAX_RETRIES` | Maximum webhook delivery attempts                       |
+| `PORT`                | Backend HTTP port                                       |
+| `NODE_ENV`            | Runtime mode                                            |
+| `CORS_ORIGIN`         | Dashboard origin allowed by API and Socket.io           |
 
 ### Where Each Variable Applies
 
@@ -849,16 +848,6 @@ Attempt 1 waits about 2 seconds, attempt 2 about 4 seconds, and attempt 3 about 
 
 ```
 
-### Backoff Growth
-
-```mermaid
-xychart-beta
-    title "Approximate Backoff Delay per Attempt"
-    x-axis "Attempt number" [1, 2, 3]
-    y-axis "Delay (seconds)" 0 --> 10
-    bar [2, 4, 8]
-```
-
 ## Data Model
 
 > Conceptual entity view based on what PostgreSQL is documented to store: job history, status, payloads, results, retry metadata, and logs. Field names are illustrative; refer to `prisma/schema.prisma` for the authoritative schema.
@@ -889,117 +878,6 @@ erDiagram
         datetime createdAt
     }
 ```
-
-### Where State Lives
-
-```mermaid
-flowchart LR
-    subgraph Redis["Redis (BullMQ) - transient queue state"]
-        R1[Waiting jobs by priority]
-        R2[Active jobs]
-        R3[Delayed retries]
-    end
-    subgraph PG["PostgreSQL - durable record"]
-        P1[Job history and status]
-        P2[Payloads and results]
-        P3[Retry metadata: attempts, nextRetryAt]
-        P4[Logs]
-    end
-    API[API] --> R1
-    API --> P1
-    WK[Workers] --> R2
-    WK --> R3
-    WK --> P1
-    WK --> P2
-    WK --> P3
-    WK --> P4
-    DASH[Dashboard via REST] --> P1
-    DASH --> P4
-```
-
-## Deployment Views
-
-### Local Development
-
-```mermaid
-flowchart TB
-    subgraph Host["Developer Machine"]
-        subgraph Docker["docker-compose"]
-            RDC[(Redis<br/>:6379)]
-            PGC[(PostgreSQL<br/>host port :5434)]
-        end
-        NODE[Node.js process<br/>API + Workers<br/>:3000]
-        NEXT[Next.js Dashboard<br/>:3001]
-    end
-    NODE --> RDC
-    NODE --> PGC
-    NEXT -->|REST + Socket.io<br/>CORS_ORIGIN http://localhost:3001| NODE
-    BROWSER([Browser]) --> NEXT
-    CURL([curl / Postman]) --> NODE
-```
-
-### First Deployment — Unified Process
-
-```mermaid
-flowchart LR
-    CL([Clients]) --> LB[Load balancer / Reverse proxy]
-    LB --> APP
-    subgraph APP["Single Node.js Process"]
-        A1[Express API]
-        A2[BullMQ Workers]
-        A3[Socket.io]
-    end
-    APP --> RD[(Redis)]
-    APP --> PG[(PostgreSQL)]
-    DASH[Next.js Dashboard] --> LB
-```
-
-### Future Scaling — Split API and Workers
-
-> Described in Known Limitations: multi-server deployments should split API and workers and add shared event broadcasting.
-
-```mermaid
-flowchart TB
-    CL([Clients]) --> LB[Load balancer]
-    LB --> API1[API instance 1]
-    LB --> API2[API instance 2]
-
-    API1 --> RD[(Redis / BullMQ)]
-    API2 --> RD
-    API1 --> PG[(PostgreSQL)]
-    API2 --> PG
-
-    RD --> WK1[Worker node 1]
-    RD --> WK2[Worker node 2]
-    RD --> WK3[Worker node N]
-    WK1 --> PG
-    WK2 --> PG
-    WK3 --> PG
-
-    WK1 -->|publish events| BUS[[Shared event broadcasting<br/>e.g. Redis pub/sub]]
-    WK2 --> BUS
-    WK3 --> BUS
-    BUS --> API1
-    BUS --> API2
-    API1 -->|Socket.io| UI[Dashboard]
-    API2 -->|Socket.io| UI
-```
-
-## Delivery Guarantees
-
-```mermaid
-flowchart TD
-    A[Job accepted] --> B[Persisted in PostgreSQL and queued in Redis]
-    B --> C[Worker executes handler]
-    C --> D{Worker or process<br/>fails mid-job?}
-    D -- No --> E[Completed once]
-    D -- Yes --> F[Job may be redelivered]
-    F --> C
-    E --> G([Effects: at-least-once semantics])
-    F --> G
-    G --> H[Use idempotent handlers<br/>when duplicate side effects are unacceptable]
-```
-
 ## Known Limitations
 
 - Processing is at-least-once. Handlers must be idempotent if duplicate side effects are unacceptable.
