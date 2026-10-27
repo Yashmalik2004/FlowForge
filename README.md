@@ -846,9 +846,6 @@ Retries use exponential backoff with jitter:
 
 Attempt 1 waits about 2 seconds, attempt 2 about 4 seconds, and attempt 3 about 8 seconds. PostgreSQL records attempt counts and `nextRetryAt` for visibility.
 
-```
-```
-
 ## Data Model
 
 > Conceptual entity view based on what PostgreSQL is documented to store: job history, status, payloads, results, retry metadata, and logs. Field names are illustrative; refer to `prisma/schema.prisma` for the authoritative schema.
