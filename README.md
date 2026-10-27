@@ -346,41 +346,6 @@ flowchart TB
     WRK --> PGD
     WRK -->|job:updated| UI
 ```
-
-### Responsibility Matrix
-
-```mermaid
-flowchart LR
-    subgraph API["API"]
-        a1[Validate requests]
-        a2[Create jobs]
-        a3[List and detail jobs]
-        a4[Handle cancellation]
-    end
-    subgraph QUEUE["Queue - BullMQ + Redis"]
-        q1[Store work items]
-        q2[Priority ordering]
-        q3[Delayed retry scheduling]
-    end
-    subgraph WORKERS["Workers"]
-        w1[Execute handlers]
-        w2[Enforce timeouts]
-        w3[Update PostgreSQL]
-        w4[Schedule retries]
-    end
-    subgraph STORAGE["Storage - PostgreSQL"]
-        s1[Job history and status]
-        s2[Payloads and results]
-        s3[Retry metadata]
-        s4[Logs]
-    end
-    subgraph DASH["Dashboard"]
-        d1[REST reads]
-        d2[Socket.io updates]
-        d3[Operational monitoring]
-    end
-```
-
 ## Data Flow Diagrams (DFD)
 
 ### DFD Level 0 — Context Diagram
